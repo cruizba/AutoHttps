@@ -6,7 +6,7 @@ ARG TARGETARCH
 
 WORKDIR /workspace
 COPY . .
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 go build
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 go build ./cmd/caddyfile-generate
 
 FROM caddy/caddy:2.10.2-alpine
 
