@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Dogs</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Random Dog Images</h1>
+        <div class="image-container">
+            <img id="dog-image" src="" alt="Random Dog">
+        </div>
+        <button onclick="loadNewDog()">Show me another dog!</button>
+    </div>
+    <script>
+        async function loadNewDog() {
+            try {
+                const response = await fetch('https://dog.ceo/api/breeds/image/random');
+                const data = await response.json();
+                const img = document.getElementById('dog-image');
+                img.src = data.message;
+            } catch (error) {
+                console.error('Error loading dog image:', error);
+            }
+        }
+        // Load initial dog
+        loadNewDog();
+    </script>
+</body>
+</html>

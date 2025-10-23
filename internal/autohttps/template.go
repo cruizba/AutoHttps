@@ -1,6 +1,7 @@
 package autohttps
 
 import (
+	"fmt"
 	"os"
 	"text/template"
 )
@@ -50,4 +51,16 @@ func (cg *CaddyGenerator) GenerateCaddyfile(path string) error {
 	defer file.Close()
 
 	return tmpl.Execute(file, data)
+}
+
+func (cg *CaddyGenerator) PrintServices() {
+	fmt.Println("---------------------------------------")
+	fmt.Println("Configured Services:")
+	fmt.Println("---------------------------------------")
+	fmt.Println("")
+	for service, url := range cg.Config.Services {
+		fmt.Println("    - Service:", service, "-> URL:", url)
+	}
+	fmt.Println("")
+	fmt.Println("---------------------------------------")
 }

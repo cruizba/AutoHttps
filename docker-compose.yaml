@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  autohttps:
+    image: cruizba/autohttps:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+    environment:
+      - SERVICES=random-cats:80,random-dogs:80
+    depends_on:
+      - random-cats
+      - random-dogs
+
+  random-cats:
+    build:
+      context: ./example-apps/random-cats
+      dockerfile: Dockerfile
+
+  random-dogs:
+    build:
+      context: ./example-apps/random-dogs
+      dockerfile: Dockerfile

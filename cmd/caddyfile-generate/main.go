@@ -14,4 +14,5 @@ func main() {
 		panic(err)
 	}
 
+	generator.PrintServices()
 }
