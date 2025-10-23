@@ -120,6 +120,7 @@ docker-compose up -d
 ### Environment Variables
 
 - `SERVICES`: A comma-separated list of services in the format:
+
   ```
   serviceName:port=domain.com,anotherService:port
   ```
