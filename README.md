@@ -51,7 +51,6 @@ services:
       - "443:443"
     volumes:
       - ./caddy_data:/data
-      - ./caddy_config:/config
     environment:
       - SERVICES=myapp1:3000,myapp2:3000
     depends_on:
@@ -91,7 +90,6 @@ services:
       - "443:443"
     volumes:
       - ./caddy_data:/data
-      - ./caddy_config:/config
     environment:
       - SERVICES=myapp1:3000=myapp1.domain.com,myapp2:3000=myapp2.domain.com
     depends_on:
@@ -128,6 +126,10 @@ docker-compose up -d
 
 ### Caddy Configuration
 
-After the first run, you can customize the Caddy configuration by modifying the files in the `caddy_config` directory. This allows you to add custom Caddy directives or modify existing ones as needed.
+If you want to modify the Caddy configuration, you need to mount the config `/config` volume to a local directory, restart the container to generate the initial config, and then modify the `Caddyfile` located in the mounted directory. Take into account that modifying the Caddyfile will disable the automatic configuration provided by AutoHttps. For example:
 
-Take into account that if you want to add or modify sites, you will need to remove the existing Caddy configuration for those sites in order to let AutoHttps generate the Caddyfile again.
+```yaml
+volumes:
+  - ./caddy_data:/data
+  - ./caddy_config:/config # <-- Add this line to the volumes section
+```
