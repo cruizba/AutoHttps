@@ -2,7 +2,7 @@
 
 AutoHttps solves the problem of easily deploying web applications with HTTPS in development environments without the need to manage certificates or domains. Perfect for developers who want to test their applications with HTTPS locally or in quick prototypes and home labs, without the hassle of certificate management or domain configuration.
 
-No domain name is required - AutoHttps will automatically generate a domain based on your server's public IP address using the [sslip.io](https://sslip.io) service. However, you can also use your own domain if you have one.
+No domain name is required: AutoHttps will automatically generate a domain based on your server's public IP address using the [sslip.io](https://sslip.io) service. However, you can also use your own domain if you have one.
 
 ## Features
 
