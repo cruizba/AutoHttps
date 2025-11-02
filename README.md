@@ -1,46 +1,70 @@
 # AutoHttps
 
-AutoHttps is a minimalistic Caddy Proxy Container Image that enables easy deployment of web applications with automatic HTTPS using Let's Encrypt certificates and [sslip.io](https://sslip.io/). It provides a zero-configuration approach to setup SSL/TLS for your services making it ideal for development and quick prototyping or home labs.
+AutoHttps solves the problem of easily deploying web applications with HTTPS in development environments without the need to manage certificates or domains. Perfect for developers who want to test their applications with HTTPS locally or in quick prototypes and home labs, without the hassle of certificate management or domain configuration.
+
+No domain name is required - AutoHttps will automatically generate a domain based on your server's public IP address using the [sslip.io](https://sslip.io) service. However, you can also use your own domain if you have one.
 
 ## Features
 
-- 🔒 Automatic HTTPS with Let's Encrypt certificates
-- 🌐 Automatic domain generation using sslip.io.
+- 🔒 Automatic HTTPS for your applications without manual certificate management
+- 🌐 No domain required - automatic domain generation based on your IP
 - 🚀 Simple configuration through environment variables
 - 🐳 Docker-ready with docker-compose support
-- ⚡ Zero-configuration SSL/TLS setup
+- ⚡ Zero-configuration setup
 
-## Example Quick Start
+## Basic Usage
 
-1. Create a VM or server with a public IP address and ports 80 and 443 open with Linux.
-2. Install Docker and Docker Compose on your server if not already installed.
-3. Execute the following commands to see how AutoHttps works with example applications:
+Let's walk through securing a simple web application with HTTPS:
 
+1. Create a VM or server with a public IP address and open ports:
+   - Port 80 (HTTP): Required for initial Let's Encrypt verification
+   - Port 443 (HTTPS): For secure traffic to your application
+
+2. Install Docker and Docker Compose on your server.
+
+3. Create a `docker-compose.yaml` file with two services:
+   - Your application (serving plain HTTP)
+   - The AutoHttps proxy (handling HTTPS)
+
+```yaml
+services:
+  # The AutoHttps proxy service
+  autohttps:
+    image: cruizba/autohttps:latest
+    ports:
+      - "80:80"    # Required for Let's Encrypt verification
+      - "443:443"  # Your users will connect here
+    volumes:
+      - ./caddy_data:/data  # Store certificates persistently
+    environment:
+      - SERVICES=myapp:3000  # Point to your app's service name and port
+    depends_on:
+      - myapp
+
+  # Your application service
+  myapp:
+    image: your-app-image
+    # IMPORTANT: Your app should:
+    # 1. Serve plain HTTP (not HTTPS)
+    # 2. Listen on port 3000 (any port is fine, just match it with
+    #    the port used in SERVICES)
+    # 3. No need to expose ports - AutoHttps will handle that
+```
+
+4. Start everything:
 ```bash
-git clone https://github.com/cruizba/AutoHttps
-cd AutoHttps
 docker compose up -d
-docker compose logs -f autohttps
 ```
 
-Check the logs of the `autohttps` service and navigate to the generated domains for the example applications:
+Your application will be available via HTTPS at `https://myapp-YOUR-IP.sslip.io`, where `YOUR-IP` is your server's public IP address formatted with dashes instead of dots.
 
-- Random Cats: `http://random-cats-YOUR_IP.sslip.io`
-- Random Dogs: `http://random-dogs-YOUR_IP.sslip.io`
+For example, if your server's IP is `1.2.3.4`, the URL will be `https://myapp-1-2-3-4.sslip.io`
 
-For example, if your public IP is `1.2.3.4` the URLs would be:
+## Advanced Usage
 
-- Random Cats: `http://random-cats-1-2-3-4.sslip.io`
-- Random Dogs: `http://random-dogs-1-2-3-4.sslip.io`
+### Using Custom Domains
 
-## Real Scenarios
-
-### Without custom domains
-
-If you have a VM or server with a public IP address, you can use AutoHttps to automatically generate domains using sslip.io.
-
-1. Create a VM or server with a public IP address and ports 80 and 443 open.
-2. Create a `docker-compose.yaml` file with autohttps service and your applications:
+If you have your own domain names, you can use them instead of the auto-generated ones. Make sure your domain's DNS records point to your server's IP address:
 
 ```yaml
 services:
@@ -52,34 +76,19 @@ services:
     volumes:
       - ./caddy_data:/data
     environment:
-      - SERVICES=myapp1:3000,myapp2:3000
+      - SERVICES=myapp:3000=myapp.yourdomain.com
     depends_on:
       - myapp
-      - api
 
-    myapp1:
-      image: your-app-image
-      ... your app configuration ...
-
-    myapp2:
-      image: your-app-image-2
-      ... your app configuration ...
+  myapp:
+    image: your-app-image
+    ports:
+      - "3000"
 ```
 
-2. Run your services:
+### Multiple Applications
 
-```bash
-docker-compose up -d
-```
-
-3. Check the logs of the `autohttps` service to see the generated domains for your applications.
-
-### With custom domains
-
-If you have your own domain names, you can configure AutoHttps to use them. Make sure your domain's DNS records point to the public IP address of your server. You need to create a domain for each service and specify it in the `SERVICES` environment variable.
-
-1. Create a VM or server with a public IP address and ports 80 and 443 open.
-2. Create a `docker-compose.yaml` file with autohttps service and your applications:
+You can secure multiple applications by listing them in the `SERVICES` variable:
 
 ```yaml
 services:
@@ -91,45 +100,97 @@ services:
     volumes:
       - ./caddy_data:/data
     environment:
-      - SERVICES=myapp1:3000=myapp1.domain.com,myapp2:3000=myapp2.domain.com
+      # Format: service1:port,service2:port
+      # Or with custom domains: service1:port=domain1.com,service2:port=domain2.com
+      - SERVICES=app1:3000,app2:8080
     depends_on:
-      - myapp
-      - api
+      - app1
+      - app2
 
-    myapp1:
-      image: your-app-image
-      ... your app configuration ...
+  app1:
+    image: your-first-app-image
+    ports:
+      - "3000"
 
-    myapp2:
-      image: your-app-image-2
-      ... your app configuration ...
+  app2:
+    image: your-second-app-image
+    ports:
+      - "8080"
 ```
-
-3. Run your services:
-
-```bash
-docker-compose up -d
-```
-
-4. Access your applications using your custom domain names.
 
 ## Configuration
 
 ### Environment Variables
 
 - `SERVICES`: A comma-separated list of services in the format:
-
   ```
-  serviceName:port=domain.com,anotherService:port
+  serviceName:port[=domain.com][,anotherService:port]
   ```
-  If the domain is omitted, sslip.io will be used with the autodiscovered public IP.
+  If the domain is omitted, a domain will be automatically generated using sslip.io with your server's public IP in the format `service-name-PUBLIC-IP.sslip.io`.
 
-### Caddy Configuration
+### Volumes
 
-If you want to modify the Caddy configuration, you need to mount the config `/config` volume to a local directory, restart the container to generate the initial config, and then modify the `Caddyfile` located in the mounted directory. Take into account that modifying the Caddyfile will disable the automatic configuration provided by AutoHttps. For example:
+AutoHttps uses two possible volume mounts:
 
-```yaml
-volumes:
-  - ./caddy_data:/data
-  - ./caddy_config:/config # <-- Add this line to the volumes section
+1. **`./caddy_data:/data` (Required)**
+   - Stores the SSL/TLS certificates and other Caddy data
+   - Must be persistent to avoid hitting Let's Encrypt rate limits
+   - Without this volume, certificates will be regenerated on every restart
+
+2. **`./caddy_config:/config` (Optional)**
+   - Stores the generated Caddyfile configuration
+   - Only mount this if you need to customize the Caddy configuration
+   - **Important:** When this volume is mounted:
+     - The Caddyfile is generated only if the directory is empty
+     - Changes to the `SERVICES` environment variable won't update the Caddyfile
+     - Manual updates to the Caddyfile are required if you modify the `SERVICES` environment variable
+
+## Limitations
+
+### Let's Encrypt Rate Limits
+
+   - Do not abuse of sslip.io service, they actually can handle up to  [10k domains](https://github.com/cunnie/sslip.io/issues/57#issuecomment-2439742710), but it is a free service maintained by volunteers.
+
+### SSLIP.io Considerations
+
+1. **Domain availability:**
+   - sslip.io domains are public and shared
+   - If someone has misused your IP-based domain, it might be temporarily blocked
+   - Consider using custom domains for production environments
+
+2. **DNS resolution:**
+   - sslip.io service might experience occasional downtime
+   - DNS resolution depends on the sslip.io service availability
+
+### Security Notes
+
+1. AutoHttps is designed for development and testing environments
+2. For production use consider using custom domains
+
+## Examples
+
+You can find a complete working examples in the `example` directory. To test it:
+
+1. Create a VM with public IP and open ports 80 and 443.
+2. Install Docker and Docker Compose.
+3. Execute the following commands:
 ```
+git clone https://github.com/cruizba/AutoHttps
+cd example
+docker compose up -d
+```
+
+You will have two applications available at:
+
+- `https://random-cats-YOUR-IP.sslip.io`
+- `https://random-dogs-YOUR-IP.sslip.io`
+
+For example, if your server's IP is `1.2.3.4`, the URLs will be:
+
+- `https://random-cats-1-2-3-4.sslip.io`
+- `https://random-dogs-1-2-3-4.sslip.io`
+
+## Project Warning
+
+> [!WARNING]
+> I am not responsible for any misuse of this tool. Do not use AutoHttps for bad purposes, as misuse can lead to domain blacklisting and other issues, deteriorating the service for everyone. Always use this tool responsibly and ethically.

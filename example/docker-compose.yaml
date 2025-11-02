@@ -15,10 +15,10 @@ services:
 
   random-cats:
     build:
-      context: ./example-apps/random-cats
+      context: ./random-cats
       dockerfile: Dockerfile
 
   random-dogs:
     build:
-      context: ./example-apps/random-dogs
+      context: ./random-dogs
       dockerfile: Dockerfile
