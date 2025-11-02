@@ -12,6 +12,22 @@ No domain name is required: AutoHttps will automatically generate a domain based
 - 🐳 Docker-ready with docker-compose support
 - ⚡ Zero-configuration setup
 
+## Table of Contents
+
+- [Basic Usage](#basic-usage)
+- [Advanced Usage](#advanced-usage)
+  - [Using Custom Domains](#using-custom-domains)
+  - [Multiple Applications](#multiple-applications)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Volumes](#volumes)
+- [Limitations](#limitations)
+  - [Let's Encrypt Rate Limits](#lets-encrypt-rate-limits)
+  - [SSLIP.io Considerations](#sslipio-considerations)
+  - [Security Notes](#security-notes)
+- [Examples](#examples)
+- [Project Warning](#project-warning)
+
 ## Basic Usage
 
 Let's walk through securing a simple web application with HTTPS:
