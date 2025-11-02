@@ -82,8 +82,6 @@ services:
 
   myapp:
     image: your-app-image
-    ports:
-      - "3000"
 ```
 
 ### Multiple Applications
@@ -109,13 +107,9 @@ services:
 
   app1:
     image: your-first-app-image
-    ports:
-      - "3000"
 
   app2:
     image: your-second-app-image
-    ports:
-      - "8080"
 ```
 
 ## Configuration
