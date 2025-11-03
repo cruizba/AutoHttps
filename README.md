@@ -122,10 +122,10 @@ services:
       - app2
 
   app1:
-    image: your-first-app-image
+    image: your-app1-image
 
   app2:
-    image: your-second-app-image
+    image: your-app2-image
 ```
 
 ## Configuration
