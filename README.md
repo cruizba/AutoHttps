@@ -186,7 +186,7 @@ You can find a complete working examples in the `example` directory. To test it:
 3. Execute the following commands:
 ```
 git clone https://github.com/cruizba/AutoHttps
-cd example
+cd AutoHttps/example
 docker compose up -d
 ```
 
