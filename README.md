@@ -1,42 +1,35 @@
 # AutoHttps
 
-AutoHttps solves the problem of easily deploying web applications with HTTPS in development environments without the need to manage certificates or domains. Perfect for developers who want to test their applications with HTTPS locally or in quick prototypes and home labs, without the hassle of certificate management or domain configuration.
+AutoHttps is a proxy in a Docker image to easily allow https access to a web application or REST API. 
 
-No domain name is required: AutoHttps will automatically generate a domain based on your server's public IP address using the [sslip.io](https://sslip.io) service. However, you can also use your own domain if you have one.
-
-## Features
-
-- 🔒 Automatic HTTPS for your applications without manual certificate management
-- 🌐 No domain required - automatic domain generation based on your IP
-- 🚀 Simple configuration through environment variables
-- 🐳 Docker-ready with docker-compose support
-- ⚡ Zero-configuration setup
+* 🔒 Generates valid SSL certificates using [Let's Encrypt](https://letsencrypt.org/) and keep it rotated when needed. 
+* 🌐 Can be used with a domain name or just with the public IP (thaks to [sslip.io](https://sslip.io)).
+* ⚡ Is designed to be very easy to configure in a docker-compose deployment.
+* 🚀 Can be used in production or in development.
 
 ## Table of Contents
 
-- [Basic Usage](#basic-usage)
-- [Advanced Usage](#advanced-usage)
-  - [Using Custom Domains](#using-custom-domains)
-  - [Multiple Applications](#multiple-applications)
+- [How to use](#how-to-use)
+  - [Without domain](#without-domain)
+  - [With domain](#with-domain)
+  - [With multiple web applications](#with-multiple-web-applications)
 - [Configuration](#configuration)
   - [Environment Variables](#environment-variables)
   - [Volumes](#volumes)
 - [Limitations](#limitations)
-  - [Let's Encrypt Rate Limits](#lets-encrypt-rate-limits)
-  - [SSLIP.io Considerations](#sslipio-considerations)
-  - [Security Notes](#security-notes)
+  - [SSLIP.io Considerations](#sslipio-considerations)  
 - [Examples](#examples)
 - [Project Warning](#project-warning)
 
-## Basic Usage
+## How to use
 
-Let's walk through securing a simple web application with HTTPS:
+### Without domain
 
-1. Create a VM or server with a public IP address and open ports:
+1. SSH connect to a server with a public IP address and open ports:
    - Port 80 (HTTP): Required for initial Let's Encrypt verification
    - Port 443 (HTTPS): For secure traffic to your application
 
-2. Install Docker and Docker Compose on your server.
+2. Install Docker and Docker Compose.
 
 3. Create a `docker-compose.yaml` file with two services:
    - Your application (serving plain HTTP)
@@ -53,17 +46,17 @@ services:
     volumes:
       - ./caddy_data:/data  # Store certificates persistently
     environment:
-      - SERVICES=myapp:3000  # Point to your app's service name and port
+      - SERVICES=web:3000  # Point to your app's service name and port
     depends_on:
-      - myapp
+      - web
 
-  # Your application service
-  myapp:
-    image: your-app-image
+  # Your web application service
+  web:
+    image: your-web-image
     # IMPORTANT: Your app should:
     # 1. Serve plain HTTP (not HTTPS)
     # 2. Listen on port 3000 (any port is fine, just match it with
-    #    the port used in SERVICES)
+    #    the port used in SERVICES environment variable)
     # 3. No need to expose ports - AutoHttps will handle that
 ```
 
@@ -71,16 +64,13 @@ services:
 ```bash
 docker compose up -d
 ```
+Your application will be available via HTTPS at `https://web-YOUR-IP.sslip.io`, where `YOUR-IP` is your server's public IP address formatted with dashes instead of dots.
 
-Your application will be available via HTTPS at `https://myapp-YOUR-IP.sslip.io`, where `YOUR-IP` is your server's public IP address formatted with dashes instead of dots.
+For example, if your server's IP is `1.2.3.4`, the URL will be `https://web-1-2-3-4.sslip.io`
 
-For example, if your server's IP is `1.2.3.4`, the URL will be `https://myapp-1-2-3-4.sslip.io`
+### With domain
 
-## Advanced Usage
-
-### Using Custom Domains
-
-If you have your own domain names, you can use them instead of the auto-generated ones. Make sure your domain's DNS records point to your server's IP address:
+If you have your a domain name pointing to the public IP configure AutoHttps in the following way:
 
 ```yaml
 services:
@@ -92,15 +82,16 @@ services:
     volumes:
       - ./caddy_data:/data
     environment:
-      - SERVICES=myapp:3000=myapp.yourdomain.com
+      - SERVICES=web:3000=www.yourdomain.com
     depends_on:
-      - myapp
+      - web
 
-  myapp:
-    image: your-app-image
+  web:
+    image: your-web-image
 ```
+Your application will be available via HTTPS at `https://www.yourdomain.com`.
 
-### Multiple Applications
+### With multiple web applications
 
 You can secure multiple applications by listing them in the `SERVICES` variable:
 
@@ -127,7 +118,6 @@ services:
   app2:
     image: your-app2-image
 ```
-
 ## Configuration
 
 ### Environment Variables
@@ -144,8 +134,7 @@ AutoHttps uses two possible volume mounts:
 
 1. **`./caddy_data:/data` (Required)**
    - Stores the SSL/TLS certificates and other Caddy data
-   - Must be persistent to avoid hitting Let's Encrypt rate limits
-   - Without this volume, certificates will be regenerated on every restart
+   - Without this volume, certificates will be regenerated on every restart (hitting Let's Encrypt rate limits)   
 
 2. **`./caddy_config:/config` (Optional)**
    - Stores the generated Caddyfile configuration
@@ -153,29 +142,23 @@ AutoHttps uses two possible volume mounts:
    - **Important:** When this volume is mounted:
      - The Caddyfile is generated only if the directory is empty
      - Changes to the `SERVICES` environment variable won't update the Caddyfile
-     - Manual updates to the Caddyfile are required if you modify the `SERVICES` environment variable
+     - Manual updates to the Caddyfile are required if you modify the `SERVICES` environment variable after initial creation
 
 ## Limitations
 
-### Let's Encrypt Rate Limits
-
-   - Do not abuse of sslip.io service, they actually can handle up to  [10k domains](https://github.com/cunnie/sslip.io/issues/57#issuecomment-2439742710), but it is a free service maintained by volunteers.
-
 ### SSLIP.io Considerations
 
-1. **Domain availability:**
+1. **Rate Limits**
+   - Do not abuse of sslip.io service, they actually can handle up to  [10k domains](https://github.com/cunnie/sslip.io/issues/57#issuecomment-2439742710), but it is a free service maintained by volunteers.
+
+2. **Domain availability:**
    - sslip.io domains are public and shared
    - If someone has misused your IP-based domain, it might be temporarily blocked
-   - Consider using custom domains for production environments
+   - It is recommended to use domains for production environments
 
 2. **DNS resolution:**
    - sslip.io service might experience occasional downtime
    - DNS resolution depends on the sslip.io service availability
-
-### Security Notes
-
-1. AutoHttps is designed for development and testing environments
-2. For production use consider using custom domains
 
 ## Examples
 
