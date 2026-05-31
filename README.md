@@ -93,15 +93,30 @@ services:
 ```
 Your application will be available via HTTPS at `https://www.yourdomain.com`.
 
+#### With domain and publishable compose file
+
 Keeping the domain in its own variable is handy when you publish a
 `docker-compose.yml` (e.g. in a registry) and want users to set the domain at
 deploy time **without editing the compose file**. Use a substitution with an
 empty default and let whoever deploys provide a `.env` file:
 
 ```yaml
+services:
+  autohttps:
+    image: cruizba/autohttps:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy_data:/data
     environment:
       - SERVICES=web:3000
-      - DOMAIN=${DOMAIN:-}   # falls back to sslip.io when unset
+      - DOMAIN=${DOMAIN:-}
+    depends_on:
+      - web
+
+  web:
+    image: your-web-image
 ```
 
 ```bash
