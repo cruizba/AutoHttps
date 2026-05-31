@@ -12,6 +12,7 @@ AutoHttps is a proxy in a Docker image to easily allow https access to a web app
 - [How to use](#how-to-use)
   - [Without domain](#without-domain)
   - [With domain](#with-domain)
+    - [With domain and publishable compose file](#with-domain-and-publishable-compose-file)
   - [With multiple web applications](#with-multiple-web-applications)
 - [Configuration](#configuration)
   - [Environment Variables](#environment-variables)
