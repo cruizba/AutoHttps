@@ -70,7 +70,8 @@ For example, if your server's IP is `1.2.3.4`, the URL will be `https://web-1-2-
 
 ### With domain
 
-If you have your a domain name pointing to the public IP configure AutoHttps in the following way:
+If you have a domain name pointing to the public IP, set it with the dedicated
+`DOMAIN` environment variable:
 
 ```yaml
 services:
@@ -82,7 +83,8 @@ services:
     volumes:
       - ./caddy_data:/data
     environment:
-      - SERVICES=web:3000=www.yourdomain.com
+      - SERVICES=web:3000
+      - DOMAIN=www.yourdomain.com
     depends_on:
       - web
 
@@ -90,6 +92,27 @@ services:
     image: your-web-image
 ```
 Your application will be available via HTTPS at `https://www.yourdomain.com`.
+
+Keeping the domain in its own variable is handy when you publish a
+`docker-compose.yml` (e.g. in a registry) and want users to set the domain at
+deploy time **without editing the compose file**. Use a substitution with an
+empty default and let whoever deploys provide a `.env` file:
+
+```yaml
+    environment:
+      - SERVICES=web:3000
+      - DOMAIN=${DOMAIN:-}   # falls back to sslip.io when unset
+```
+
+```bash
+# .env (provided at deploy time)
+DOMAIN=www.yourdomain.com
+```
+
+If `DOMAIN` is left empty (or the `.env` file is omitted), AutoHttps falls back
+to a sslip.io domain automatically, so the same template works with or without a
+custom domain. `DOMAIN` is only valid with a single service; for multiple
+applications set each domain inline in `SERVICES` (see below).
 
 ### With multiple web applications
 
@@ -126,7 +149,16 @@ services:
   ```
   serviceName:port[=domain.com][,anotherService:port]
   ```
-  If the domain is omitted, a domain will be automatically generated using sslip.io with your server's public IP in the format `service-name-PUBLIC-IP.sslip.io`.
+  If the domain is omitted (or left empty, e.g. `web:3000=`), a domain will be
+  automatically generated using sslip.io with your server's public IP in the
+  format `service-name-PUBLIC-IP.sslip.io`.
+
+- `DOMAIN` (optional): Sets the domain for a **single-service** deployment
+  without having to edit `SERVICES`. Useful for publishable docker-compose
+  templates: keep `SERVICES=web:3000` in the compose file and let users pass
+  `DOMAIN` via a `.env` file. When `DOMAIN` is unset or empty, AutoHttps falls
+  back to a sslip.io domain. It cannot be combined with multiple services or
+  with an inline domain in `SERVICES` (set each domain inline instead).
 
 ### Volumes
 
