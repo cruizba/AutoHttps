@@ -1,4 +1,4 @@
-FROM golang:1.26.3 AS builder
+FROM golang:1.26.4 AS builder
 
 ARG TARGETOS
 ARG TARGETPLATFORM
@@ -8,7 +8,7 @@ WORKDIR /workspace
 COPY . .
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 go build ./cmd/caddyfile-generate
 
-FROM caddy/caddy:2.11.3-alpine
+FROM caddy/caddy:2.11.4-alpine
 
 COPY --from=builder /workspace/caddyfile-generate /usr/bin/caddyfile-generate
 COPY --from=builder /workspace/entrypoint.sh /entrypoint.sh
